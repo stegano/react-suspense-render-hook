@@ -1,0 +1,45 @@
+{
+  "name": "react-suspense-render-hook",
+  "version": "0.0.1",
+  "description": "React Suspense Render Hook: This hook allows you to declaratively define components that render when asynchronous data is processed.",
+  "main": "./bin/index.js",
+  "scripts": {
+    "eslint": "eslint '{src,pages}/**/*.{ts,tsx}'",
+    "eslint:fix": "eslint '{src,pages}/**/*.{ts,tsx}' --fix",
+    "build": "rm -rf ./dist && tsc -p tsconfig.build.json"
+  },
+  "author": "Yongwoo Jung<stegano@naver.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/stegano/use-render#readme",
+  "bugs": {
+    "url": "https://github.com/stegano/use-render/issues"
+  },
+  "keywords": [
+    "react",
+    "hooks",
+    "render",
+    "suspense",
+    "loading",
+    "indicator",
+    "async",
+    "use"
+  ],
+  "devDependencies": {
+    "@types/react": "^18.2.21",
+    "@typescript-eslint/eslint-plugin": "^6.5.0",
+    "@typescript-eslint/parser": "^6.5.0",
+    "eslint": "^8.48.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-typescript": "^17.1.0",
+    "eslint-config-next": "^13.4.19",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-storybook": "^0.6.13",
+    "eslint-plugin-unused-imports": "^3.0.0",
+    "prettier": "^3.0.3",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "react": "^18.2.0"
+  }
+}
