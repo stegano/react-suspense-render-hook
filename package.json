@@ -2,17 +2,19 @@
   "name": "react-suspense-render-hook",
   "version": "0.0.2",
   "description": "React Suspense Render Hook: This hook allows you to declaratively define components that render when asynchronous data is processed.",
-  "main": "./src/index.ts",
+  "main": "bin/index.js",
+  "types": "bin/index.d.ts",
   "scripts": {
     "eslint": "eslint '{src,pages}/**/*.{ts,tsx}'",
     "eslint:fix": "eslint '{src,pages}/**/*.{ts,tsx}' --fix",
-    "build": "rm -rf ./dist && tsc -p tsconfig.build.json"
+    "build": "rm -rf ./bin && webpack --config ./webpack.config.js",
+    "deploy": "npm run build && npm publish --access=public"
   },
   "author": "Yongwoo Jung<stegano@naver.com>",
   "license": "MIT",
-  "homepage": "https://github.com/stegano/use-render#readme",
+  "homepage": "https://github.com/stegano/react-suspense-render-hook#readme",
   "bugs": {
-    "url": "https://github.com/stegano/use-render/issues"
+    "url": "https://github.com/stegano/react-suspense-render-hook/issues"
   },
   "keywords": [
     "react",
@@ -37,7 +39,10 @@
     "eslint-plugin-storybook": "^0.6.13",
     "eslint-plugin-unused-imports": "^3.0.0",
     "prettier": "^3.0.3",
-    "typescript": "^5.2.2"
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
     "react": "^18.2.0"
