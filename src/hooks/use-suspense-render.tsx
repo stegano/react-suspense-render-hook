@@ -1,46 +1,54 @@
 import { useState, useEffect, useCallback, useContext } from "react";
-import { Fetcher, Status } from "./use-suspense-render.interface";
+import {
+  Status,
+  type AsyncTask,
+  type ReRunAsyncTask,
+  type SuspenseRender,
+  type UseSuspenseRenderReturnValues,
+} from "./use-suspense-render.interface";
 import { SuspenseRenderContext } from "../providers";
 
-const useSuspenseRedner = <R extends any = any>(fetcher: Fetcher<R>) => {
+const useSuspenseRedner = <Data extends any>(
+  asyncTask: AsyncTask<Data>,
+): UseSuspenseRenderReturnValues<Data> => {
   const [status, setStatus] = useState<Status>(Status.Pending);
-  const [data, setData] = useState<R | undefined>(undefined);
-  const [dataProcessingError, setDataProcessing] = useState<unknown>(undefined);
+  const [data, setData] = useState<Data | undefined>(undefined);
+  const [asyncTaskError, setAsyncTaskError] = useState<unknown>(undefined);
 
   const configure = useContext(SuspenseRenderContext);
 
   useEffect(() => {
-    fetcher()
+    asyncTask()
       .then((value) => {
         setStatus(Status.Resolved);
         setData(value);
       })
       .catch((e) => {
         setStatus(Status.Rejected);
-        setDataProcessing(e);
+        setAsyncTaskError(e);
       });
-  }, [fetcher]);
+  }, [asyncTask]);
 
   /**
-   * Re-fetch data
+   * Re-run `asyncTask` function
    */
-  const reFetch = useCallback(() => {
+  const reRunAsyncTask: ReRunAsyncTask = useCallback(() => {
     setStatus(Status.Pending);
-    fetcher()
+    asyncTask()
       .then((value) => {
         setStatus(Status.Resolved);
         setData(value);
       })
       .catch((e) => {
         setStatus(Status.Rejected);
-        setDataProcessing(e);
+        setAsyncTaskError(e);
       });
-  }, [fetcher]);
+  }, [asyncTask]);
 
   /**
    * Render component
    */
-  const suspenseRender = useCallback(
+  const suspenseRender: SuspenseRender = useCallback(
     (
       success: JSX.Element,
       loading: JSX.Element = configure.loading || success,
@@ -55,7 +63,7 @@ const useSuspenseRedner = <R extends any = any>(fetcher: Fetcher<R>) => {
              * Propagate the error upwards if the error component does not exist,
              * so that it can be handled at the error boundary.
              */
-            throw dataProcessingError;
+            throw asyncTaskError;
           }
           return error;
         case Status.Pending:
@@ -63,10 +71,10 @@ const useSuspenseRedner = <R extends any = any>(fetcher: Fetcher<R>) => {
           return loading;
       }
     },
-    [configure.error, configure.loading, dataProcessingError, status],
+    [configure.error, configure.loading, asyncTaskError, status],
   );
 
-  return [suspenseRender, reFetch, data, dataProcessingError] as const;
+  return [suspenseRender, reRunAsyncTask, data, asyncTaskError];
 };
 
 export default useSuspenseRedner;
