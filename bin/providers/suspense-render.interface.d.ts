@@ -1,11 +1,11 @@
 import { PropsWithChildren } from "react";
 export interface Context {
     /**
-     * 로딩 컴포넌트
+     * Loading component
      */
     loading?: JSX.Element;
     /**
-     * 에러 컴포넌트
+     * Error component
      */
     error?: JSX.Element;
 }
