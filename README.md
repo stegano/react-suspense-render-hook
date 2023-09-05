@@ -18,33 +18,25 @@ Alternately, download the source.
 git clone https://github.com/stegano/react-suspense-render-hook.git
 ```
 
-## Quick Starts
+## Quick Start
 
 ### useSuspenseRender 
-By using the `useSuspenseRender` hook, you can declaratively define which components will be displayed based on the asynchronous data processing status within the component. 
-Inside the component, you can comprehensively handle the components to be rendered based on the data processing status.
+The `useSuspenseRender` hook enables a declarative approach to display components based on asynchronous data processing status. Handle components' rendering based on data processing status within a single component.
 
 ```tsx
 import { useSuspenseRender } from "react-suspense-render-hook";
 
 const DataComponent = () => {
-  // Asynchronous data processing function
-  const fetcher = useCallback(
+  // Asynchronous task function
+  const asyncTask = useCallback(
     async () => new Promise((resolve) => {
       setTimeout(resolve, 1000);
     }
   ), []);
 
-  // Pass the `fetcher` function as an argument to the `useSuspenseRender` function and call it.
-  // When you pass an asynchronous data processing function(=fetcher) 
-  // to the `useSuspenseRender` hook, it returns a `suspenseRender` function.
-  const [ suspenseRender ] = useSuspenseRender(fetcher);
+  const [ suspenseRender ] = useSuspenseRender(asyncTask);
 
-  // Define rendering for each data processing status using the `suspenseRender` function.
-  // The `suspenseRender` function allows you to define the components that will be displayed 
-  // when data processing is successful, while data processing is ongoing, and when data processing fails. 
-  // While the fetcher function passed as an argument to the `useSuspenseRender` function is running, 
-  // `suspenseRender` automatically renders the screen based on the data processing status.
+  // Use `suspenseRender` to define rendering for data processing statuses: success, loading, or error. It auto-renders based on the `asyncTask` function's status.
   return suspenseRender(
     <p>Success</p>,
     <p>Loading..</p>,
@@ -54,14 +46,12 @@ const DataComponent = () => {
 ```
 
 ### SuspenseRenderProvider
-By using the `SuspenseRenderProvider`, you can predefine the screen that will be displayed when data is being processed or when data processing fails, from outside the component.
+The `SuspenseRenderProvider` allows for predefined loading or error components to be set externally.
 
 ```tsx
 import { SuspenseRenderProvider, useSuspenseRender } from "react-suspense-render-hook";
 
 const App = ({ children }) => {
-  ...
-
   return (
     <SuspenseRenderProvider loading={<p>Loading..</p>} error={<p>Error!</p>}>
       <DataComponent />
@@ -69,15 +59,11 @@ const App = ({ children }) => {
   )
 }
 
-...
+// ...
 
 const DataComponent = () => {
-  ...
-
-  const [ suspenseRender ] = useSuspenseRender(fetcher);
-
-  // If you do not define the components to be displayed during data processing or when data processing fails, 
-  // the components defined in the parent component (i.e., SuspenseRenderProvider) will be displayed.
+  const [ suspenseRender ] = useSuspenseRender(asyncTask);
+  // If not specified, components defined in `SuspenseRenderProvider` are used for `loading` or `error`.
   return suspenseRender(
     <p>Success</p>
   );
