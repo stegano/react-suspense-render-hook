@@ -44,6 +44,7 @@ const DataComponent = () => {
   );
 }
 ```
+Demo: https://stackblitz.com/edit/stackblitz-starters-pgefl6
 
 ### SuspenseRenderProvider
 The `SuspenseRenderProvider` allows for predefined loading or error components to be set externally.
@@ -69,3 +70,4 @@ const DataComponent = () => {
   );
 }
 ```
+Demo: https://stackblitz.com/edit/stackblitz-starters-bwapyp
