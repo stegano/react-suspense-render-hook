@@ -49,16 +49,12 @@ const useSuspenseRedner = <Data extends any>(
    * Render component
    */
   const suspenseRender: SuspenseRender = useCallback(
-    (
-      success: JSX.Element,
-      loading: JSX.Element = configure.loading || success,
-      error: JSX.Element | undefined = configure.error,
-    ) => {
+    (success, loading, error) => {
       switch (status) {
         case Status.Resolved:
           return success;
         case Status.Rejected:
-          if (error === undefined) {
+          if (!error) {
             /**
              * Propagate the error upwards if the error component does not exist,
              * so that it can be handled at the error boundary.
