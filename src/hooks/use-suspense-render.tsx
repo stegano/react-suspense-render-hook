@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback, useContext } from "react";
 import {
   Status,
   type AsyncTask,
-  type ReRunAsyncTask,
   type SuspenseRender,
   type UseSuspenseRenderReturnValues,
+  type RunAsyncTask,
 } from "./use-suspense-render.interface";
 import { SuspenseRenderContext } from "../providers";
 
 const useSuspenseRedner = <Data extends any>(
-  asyncTask: AsyncTask<Data>,
+  initAsyncTask?: AsyncTask<Data>,
 ): UseSuspenseRenderReturnValues<Data> => {
   const [status, setStatus] = useState<Status>(Status.Pending);
   const [data, setData] = useState<Data | undefined>(undefined);
@@ -18,7 +18,7 @@ const useSuspenseRedner = <Data extends any>(
   const configure = useContext(SuspenseRenderContext);
 
   useEffect(() => {
-    asyncTask()
+    initAsyncTask?.()
       .then((value) => {
         setStatus(Status.Resolved);
         setData(value);
@@ -27,12 +27,12 @@ const useSuspenseRedner = <Data extends any>(
         setStatus(Status.Rejected);
         setAsyncTaskError(e);
       });
-  }, [asyncTask]);
+  }, [initAsyncTask]);
 
   /**
-   * Re-run `asyncTask` function
+   * Run `asyncTask` function
    */
-  const reRunAsyncTask: ReRunAsyncTask = useCallback(() => {
+  const runAsyncTask: RunAsyncTask<Data> = useCallback((asyncTask) => {
     setStatus(Status.Pending);
     asyncTask()
       .then((value) => {
@@ -43,7 +43,7 @@ const useSuspenseRedner = <Data extends any>(
         setStatus(Status.Rejected);
         setAsyncTaskError(e);
       });
-  }, [asyncTask]);
+  }, []);
 
   /**
    * Render component
@@ -70,7 +70,7 @@ const useSuspenseRedner = <Data extends any>(
     [configure.error, configure.loading, asyncTaskError, status],
   );
 
-  return [suspenseRender, reRunAsyncTask, data, asyncTaskError];
+  return [suspenseRender, runAsyncTask, data, asyncTaskError];
 };
 
 export default useSuspenseRedner;

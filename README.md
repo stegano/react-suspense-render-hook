@@ -24,25 +24,43 @@ git clone https://github.com/stegano/react-suspense-render-hook.git
 The `useSuspenseRender` hook enables a declarative approach to display components based on asynchronous data processing status. Handle components' rendering based on data processing status within a single component.
 
 ```tsx
+import { useState, useCallback } from "react";
 import { useSuspenseRender } from "react-suspense-render-hook";
 
 const DataComponent = () => {
+  const [data, setData] = useState("NONE");
+  
   // Asynchronous task function
   const asyncTask = useCallback(
-    async () => new Promise((resolve) => {
-      setTimeout(resolve, 1000);
-    }
-  ), []);
+    async () =>
+      new Promise((resolve) => {
+        const randomString = Math.random().toString(32).slice(2);
+        setData(randomString);
+        setTimeout(resolve, 1000 * 3);
+      }),
+    [],
+  );
 
-  const [ suspenseRender ] = useSuspenseRender(asyncTask);
+  // You can use the `runAsyncTask` function to process asynchronous data again at your desired point after the screen has been rendered.
+  const [suspenseRender, runAsyncTask] = useSuspenseRender(asyncTask);
+
+  const handleButtonClick = useCallback(() => {
+    // Run the `asyncTask` function
+    runAsyncTask(asyncTask); // Alternatively, you can use `runASyncTask(new Promise(...))`;
+  }, [asyncTask, runAsyncTask]);
 
   // Use `suspenseRender` to define rendering for data processing statuses: success, loading, or error. It auto-renders based on the `asyncTask` function's status.
   return suspenseRender(
-    <p>Success</p>,
+    <div>
+      <p>Success({data})</p>
+      <button type="button" onClick={handleButtonClick}>
+        Update
+      </button>
+    </div>,
     <p>Loading..</p>,
     <p>Error, Oops somethins wrong.. :(</p>,
   );
-}
+};
 ```
 Demo: https://stackblitz.com/edit/stackblitz-starters-pgefl6
 

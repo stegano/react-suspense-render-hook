@@ -11,8 +11,8 @@ export interface AsyncTask<R extends any = void | undefined> {
   (): Promise<R>;
 }
 
-export interface ReRunAsyncTask {
-  (): void;
+export interface RunAsyncTask<T extends any = any> {
+  (asyncTask: AsyncTask<T>): void;
 }
 
 export type SuspenseRenderElement = JSX.Element | undefined | null;
@@ -29,7 +29,7 @@ export type AsyncTaskError = Error | unknown;
 
 export type UseSuspenseRenderReturnValues<Data> = [
   SuspenseRender,
-  ReRunAsyncTask,
+  RunAsyncTask<Data>,
   Data | undefined,
   AsyncTaskError | undefined,
 ];
