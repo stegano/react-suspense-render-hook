@@ -2,9 +2,9 @@
  * Data processing status
  */
 export enum Status {
-  Pending,
-  Resolved,
-  Rejected,
+  PENDING,
+  RESOLVED,
+  REJECTED,
 }
 
 export interface AsyncTask<R extends any = void | undefined> {

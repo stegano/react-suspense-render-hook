@@ -11,7 +11,7 @@ import { SuspenseRenderContext } from "../providers";
 const useSuspenseRedner = <Data extends any>(
   initAsyncTask?: AsyncTask<Data>,
 ): UseSuspenseRenderReturnValues<Data> => {
-  const [status, setStatus] = useState<Status>(Status.Pending);
+  const [status, setStatus] = useState<Status>(Status.PENDING);
   const [data, setData] = useState<Data | undefined>(undefined);
   const [asyncTaskError, setAsyncTaskError] = useState<unknown>(undefined);
 
@@ -20,11 +20,11 @@ const useSuspenseRedner = <Data extends any>(
   useEffect(() => {
     initAsyncTask?.()
       .then((value) => {
-        setStatus(Status.Resolved);
+        setStatus(Status.RESOLVED);
         setData(value);
       })
       .catch((e) => {
-        setStatus(Status.Rejected);
+        setStatus(Status.REJECTED);
         setAsyncTaskError(e);
       });
   }, [initAsyncTask]);
@@ -33,14 +33,14 @@ const useSuspenseRedner = <Data extends any>(
    * Run `asyncTask` function
    */
   const runAsyncTask: RunAsyncTask<Data> = useCallback((asyncTask) => {
-    setStatus(Status.Pending);
+    setStatus(Status.PENDING);
     asyncTask()
       .then((value) => {
-        setStatus(Status.Resolved);
+        setStatus(Status.RESOLVED);
         setData(value);
       })
       .catch((e) => {
-        setStatus(Status.Rejected);
+        setStatus(Status.REJECTED);
         setAsyncTaskError(e);
       });
   }, []);
@@ -51,9 +51,9 @@ const useSuspenseRedner = <Data extends any>(
   const suspenseRender: SuspenseRender = useCallback(
     (success, loading, error) => {
       switch (status) {
-        case Status.Resolved:
+        case Status.RESOLVED:
           return success;
-        case Status.Rejected:
+        case Status.REJECTED:
           if (!error) {
             /**
              * Propagate the error upwards if the error component does not exist,
@@ -62,7 +62,7 @@ const useSuspenseRedner = <Data extends any>(
             throw asyncTaskError;
           }
           return error;
-        case Status.Pending:
+        case Status.PENDING:
         default:
           return loading;
       }
