@@ -13,8 +13,9 @@ export interface AsyncTask<R extends any = void | undefined> {
 export interface ReRunAsyncTask {
     (): void;
 }
+export type SuspenseRenderElement = JSX.Element | undefined | null;
 export interface SuspenseRender {
-    (success: JSX.Element, loading?: JSX.Element, error?: JSX.Element): JSX.Element | undefined;
+    (success: SuspenseRenderElement, loading?: SuspenseRenderElement, error?: SuspenseRenderElement): SuspenseRenderElement;
 }
 export type AsyncTaskError = Error | unknown;
 export type UseSuspenseRenderReturnValues<Data> = [
