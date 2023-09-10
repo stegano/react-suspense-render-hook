@@ -70,7 +70,7 @@ const useSuspenseRedner = <Data extends any>(
     [configure.error, configure.loading, asyncTaskError, status],
   );
 
-  return [suspenseRender, runAsyncTask, data, asyncTaskError];
+  return [suspenseRender, runAsyncTask, data, asyncTaskError, status];
 };
 
 export default useSuspenseRedner;

@@ -32,4 +32,5 @@ export type UseSuspenseRenderReturnValues<Data> = [
   RunAsyncTask<Data>,
   Data | undefined,
   AsyncTaskError | undefined,
+  Status,
 ];
