@@ -58,7 +58,7 @@ const DataComponent = () => {
       </button>
     </div>,
     <p>Loading..</p>,
-    <p>Error, Oops somethins wrong.. :(</p>,
+    <p>Error, Oops something went wrong.. :(</p>,
   );
 };
 ```
