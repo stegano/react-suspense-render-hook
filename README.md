@@ -27,38 +27,43 @@ The `useSuspenseRender` hook enables a declarative approach to display component
 import { useState, useCallback } from "react";
 import { useSuspenseRender } from "react-suspense-render-hook";
 
-const DataComponent = () => {
-  const [data, setData] = useState("NONE");
-  
+const App = () => {
   // Asynchronous task function
   const asyncTask = useCallback(
-    async () =>
-      new Promise((resolve) => {
+    () =>
+      new Promise<string>((resolve) => {
         const randomString = Math.random().toString(32).slice(2);
-        setData(randomString);
-        setTimeout(resolve, 1000 * 3);
+        setTimeout(() => resolve(randomString), 1000 * 3);
       }),
     [],
   );
 
+  useEffect(() => {
+    asyncTask();
+  }, [asyncTask]);
+
   // You can use the `runAsyncTask` function to process asynchronous data again at your desired point after the screen has been rendered.
-  const [suspenseRender, runAsyncTask] = useSuspenseRender(asyncTask);
+  const [suspenseRender, runAsyncTask] = useSuspenseRender<string, Error>();
 
   const handleButtonClick = useCallback(() => {
     // Run the `asyncTask` function
-    runAsyncTask(asyncTask); // Alternatively, you can use `runASyncTask(new Promise(...))`;
+    runAsyncTask(async () => {
+      return asyncTask();
+    }); // Alternatively, you can use `runAsyncTask(new Promise(...))`;
   }, [asyncTask, runAsyncTask]);
 
   // Use `suspenseRender` to define rendering for data processing statuses: success, loading, or error. It auto-renders based on the `asyncTask` function's status.
   return suspenseRender(
-    <div>
-      <p>Success({data})</p>
-      <button type="button" onClick={handleButtonClick}>
-        Update
-      </button>
-    </div>,
+    (data) => (
+      <div>
+        <p>Success({data})</p>
+        <button type="button" onClick={handleButtonClick}>
+          Update
+        </button>
+      </div>
+    ),
     <p>Loading..</p>,
-    <p>Error, Oops something went wrong.. :(</p>,
+    (error) => <p>Error, Oops something went wrong.. :(, ({error.message})</p>,
   );
 };
 ```
