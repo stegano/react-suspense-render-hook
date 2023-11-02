@@ -1,5 +1,5 @@
 /// <reference types="react" />
 import { Context, Props } from "./suspense-render.interface";
-export declare const SuspenseRenderContext: import("react").Context<Context>;
+export declare const SuspenseRenderContext: import("react").Context<Context<any, unknown>>;
 declare function SuspenseRenderProvider({ children, loading, error }: Props): import("react/jsx-runtime").JSX.Element;
 export default SuspenseRenderProvider;

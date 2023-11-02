@@ -1,13 +1,17 @@
 import { PropsWithChildren } from "react";
-import { SuspenseRenderElement } from "../hooks/use-suspense-render.interface";
-export interface Context {
+import { SuspenseRenderError, SuspenseRenderLoading, SuspenseRenderSuccess } from "../hooks/use-suspense-render.interface";
+export interface Context<Data extends any = any, AsyncTaskError extends Error | unknown = unknown> {
     /**
-     * Loading component
+     * The `success` component or render function.
      */
-    loading?: SuspenseRenderElement;
+    success?: SuspenseRenderSuccess<Data>;
     /**
-     * Error component
+     * The `loading` component or render function.
      */
-    error?: SuspenseRenderElement;
+    loading?: SuspenseRenderLoading<Data>;
+    /**
+     * The `error` component or render function.
+     */
+    error?: SuspenseRenderError<AsyncTaskError>;
 }
 export type Props = PropsWithChildren<Context>;
