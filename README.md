@@ -38,12 +38,15 @@ const App = () => {
     [],
   );
 
-  useEffect(() => {
-    asyncTask();
-  }, [asyncTask]);
-
   // You can use the `runAsyncTask` function to process asynchronous data again at your desired point after the screen has been rendered.
   const [suspenseRender, runAsyncTask] = useSuspenseRender<string, Error>();
+
+  useEffect(() => {
+    // Run asynchronous task function
+    runAsyncTask(async () => {
+      return asyncTask();
+    });
+  }, [asyncTask]);
 
   const handleButtonClick = useCallback(() => {
     // Run the `asyncTask` function
