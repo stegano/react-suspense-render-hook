@@ -2,18 +2,22 @@ import { useState, useCallback, useContext } from "react";
 import {
   AsyncTaskStatus,
   type SuspenseRender,
-  type UseSuspenseRenderReturnValues,
+  type ReturnValues,
   type AsyncTaskRunner,
   AsyncState,
+  Options,
 } from "./use-suspense-render.interface";
 import { SuspenseRenderContext } from "../providers";
 
-const useSuspenseRedner = <
-  Data extends any = any,
-  AsyncTaskError = Error | unknown,
->(): UseSuspenseRenderReturnValues<Data, AsyncTaskError> => {
+const useSuspenseRedner = <Data extends any = any, AsyncTaskError = Error | unknown>(
+  options: Options = {
+    immediatelyRenderSuccess: false,
+  },
+): ReturnValues<Data, AsyncTaskError> => {
   const [asyncState, setAsyncState] = useState<AsyncState<Data, AsyncTaskError>>({
-    taskStatus: AsyncTaskStatus.PENDING,
+    taskStatus: options.immediatelyRenderSuccess
+      ? AsyncTaskStatus.RESOLVED
+      : AsyncTaskStatus.PENDING,
   });
   const configure = useContext(SuspenseRenderContext);
 
