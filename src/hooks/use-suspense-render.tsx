@@ -1,76 +1,90 @@
-import { useState, useEffect, useCallback, useContext } from "react";
+import { useState, useCallback, useContext } from "react";
 import {
-  Status,
-  type AsyncTask,
+  AsyncTaskStatus,
   type SuspenseRender,
   type UseSuspenseRenderReturnValues,
-  type RunAsyncTask,
+  type AsyncTaskRunner,
+  AsyncState,
 } from "./use-suspense-render.interface";
 import { SuspenseRenderContext } from "../providers";
 
-const useSuspenseRedner = <Data extends any>(
-  initAsyncTask?: AsyncTask<Data>,
-): UseSuspenseRenderReturnValues<Data> => {
-  const [status, setStatus] = useState<Status>(Status.PENDING);
-  const [data, setData] = useState<Data | undefined>(undefined);
-  const [asyncTaskError, setAsyncTaskError] = useState<unknown>(undefined);
-
+const useSuspenseRedner = <
+  Data extends any = any,
+  AsyncTaskError = Error | unknown,
+>(): UseSuspenseRenderReturnValues<Data, AsyncTaskError> => {
+  const [asyncState, setAsyncState] = useState<AsyncState<Data, AsyncTaskError>>({
+    taskStatus: AsyncTaskStatus.PENDING,
+  });
   const configure = useContext(SuspenseRenderContext);
-
-  useEffect(() => {
-    initAsyncTask?.()
-      .then((value) => {
-        setStatus(Status.RESOLVED);
-        setData(value);
-      })
-      .catch((e) => {
-        setStatus(Status.REJECTED);
-        setAsyncTaskError(e);
-      });
-  }, [initAsyncTask]);
 
   /**
    * Run `asyncTask` function
    */
-  const runAsyncTask: RunAsyncTask<Data> = useCallback((asyncTask) => {
-    setStatus(Status.PENDING);
-    asyncTask()
+  const runAsyncTask: AsyncTaskRunner<Data> = useCallback((asyncTask) => {
+    setAsyncState({ taskStatus: AsyncTaskStatus.PENDING });
+    const taskPromise = asyncTask();
+    taskPromise
       .then((value) => {
-        setStatus(Status.RESOLVED);
-        setData(value);
+        setAsyncState({
+          taskStatus: AsyncTaskStatus.RESOLVED,
+          data: value,
+          taskPromise,
+        });
       })
-      .catch((e) => {
-        setStatus(Status.REJECTED);
-        setAsyncTaskError(e);
+      .catch((taskError) => {
+        setAsyncState({
+          taskStatus: AsyncTaskStatus.REJECTED,
+          taskError,
+          taskPromise,
+        });
       });
+    return taskPromise;
   }, []);
 
   /**
    * Render component
    */
-  const suspenseRender: SuspenseRender = useCallback(
-    (success, loading, error) => {
-      switch (status) {
-        case Status.RESOLVED:
-          return success;
-        case Status.REJECTED:
-          if (!error) {
+  const suspenseRender: SuspenseRender<Data, AsyncTaskError> = useCallback(
+    (renderSuccess, renderLoading, renderError) => {
+      const { data, taskStatus, taskError, taskPromise } = asyncState;
+      switch (taskStatus) {
+        case AsyncTaskStatus.RESOLVED: {
+          const render = typeof renderSuccess !== "undefined" ? renderSuccess : configure.success;
+          return typeof render === "function" ? render(data as Data) : render;
+        }
+        case AsyncTaskStatus.REJECTED: {
+          const render = typeof renderError !== "undefined" ? renderError : configure.error;
+          if (!render) {
             /**
              * Propagate the error upwards if the error component does not exist,
              * so that it can be handled at the error boundary.
              */
-            throw asyncTaskError;
+            if (taskError instanceof Error) {
+              throw taskError;
+            }
           }
-          return error;
-        case Status.PENDING:
-        default:
-          return loading;
+          if (typeof taskError === "undefined") {
+            throw new Error("The `taskError` is undefined");
+          }
+          return typeof render === "function" ? render(taskError) : render;
+        }
+        case AsyncTaskStatus.PENDING:
+        default: {
+          const render = typeof renderLoading !== "undefined" ? renderLoading : configure.loading;
+          return typeof render === "function" ? render(taskPromise) : render;
+        }
       }
     },
-    [configure.error, configure.loading, asyncTaskError, status],
+    [asyncState, configure.error, configure.loading, configure.success],
   );
 
-  return [suspenseRender, runAsyncTask, data, asyncTaskError, status];
+  return [
+    suspenseRender,
+    runAsyncTask,
+    asyncState.data,
+    asyncState.taskError,
+    asyncState.taskStatus,
+  ];
 };
 
 export default useSuspenseRedner;
