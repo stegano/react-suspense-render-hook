@@ -22,7 +22,7 @@ export interface AsyncTaskRunner<Data extends any = any> {
 /**
  * When the async task is resolved, the data will be passed to the success render function.
  */
-export type SuspenseRenderSuccess<Data> = React.ReactNode | ((data: Data) => React.ReactNode);
+export type SuspenseRenderSuccess<Data> = React.ReactNode | ((data?: Data) => React.ReactNode);
 /**
  * When the async task is pending, the loading render function will be called.
  */
@@ -49,10 +49,20 @@ export interface AsyncState<Data, AsyncTaskError> {
 /**
  * The return values of the `useSuspenseRender` hook.
  */
-export type UseSuspenseRenderReturnValues<Data, AsyncTaskError> = [
+export type ReturnValues<Data, AsyncTaskError> = [
     SuspenseRender<Data, AsyncTaskError>,
     AsyncTaskRunner<Data>,
     Data | undefined,
     AsyncTaskError | undefined,
     AsyncTaskStatus
 ];
+/**
+ * The options of the `useSuspenseRender` hook.
+ */
+export interface Options {
+    /**
+     * If true, it considers the async task successful and renders it immediately.
+     * @default false
+     */
+    immediatelyRenderSuccess?: boolean;
+}
