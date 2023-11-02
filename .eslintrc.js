@@ -2,7 +2,7 @@ module.exports = {
   parserOptions: {
     project: "./tsconfig.json",
   },
-  plugins: ["prettier", "unused-imports"],
+  plugins: ["prettier", "unused-imports", "react-hooks"],
   extends: [
     "plugin:react/recommended",
     "airbnb",
@@ -28,6 +28,7 @@ module.exports = {
         argsIgnorePattern: "^_",
       },
     ],
+    "react-hooks/exhaustive-deps": "warn",
   },
   ignorePatterns: ["references"],
 };
