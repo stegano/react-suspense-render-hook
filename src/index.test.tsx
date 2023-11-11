@@ -9,22 +9,22 @@ const delay = (ms: number) =>
   });
 
 describe("`useSuspenseRender` Testing", () => {
-  it("When the async task succeeds", async () => {
+  it("renderSuccess", async () => {
     const TestComponent = () => {
-      const asyncTask = useCallback(
+      const task = useCallback(
         async () =>
           new Promise((resolve) => {
             setTimeout(resolve, 100);
           }),
         [],
       );
-      const [suspenseRender, runAsyncTask] = useSuspenseRender<string>();
+      const [suspenseRender, runTask] = useSuspenseRender<string>();
       useEffect(() => {
-        runAsyncTask(async () => {
-          await asyncTask();
+        runTask(async () => {
+          await task();
           return "Aaa";
         });
-      }, [asyncTask, runAsyncTask]);
+      }, [task, runTask]);
       return suspenseRender((data) => <p>Success({data})</p>, <p>Loading</p>, <p>Error</p>);
     };
     const component = ReactTestRender.create(<TestComponent />);
@@ -36,7 +36,7 @@ describe("`useSuspenseRender` Testing", () => {
       expect(state2.children?.join("")).toEqual("Success(Aaa)");
     });
   });
-  it("When the async task encounters an error", async () => {
+  it("renderError", async () => {
     const TestComponent = () => {
       const asyncErrorTask = useCallback(
         async () =>
@@ -45,13 +45,13 @@ describe("`useSuspenseRender` Testing", () => {
           }),
         [],
       );
-      const [suspenseRender, runAsyncTask] = useSuspenseRender<string, Error>();
+      const [suspenseRender, runTask] = useSuspenseRender<string, Error>();
       useEffect(() => {
-        runAsyncTask(async () => {
+        runTask(async () => {
           await asyncErrorTask();
           return "Aaa";
         });
-      }, [asyncErrorTask, runAsyncTask]);
+      }, [asyncErrorTask, runTask]);
       return suspenseRender(
         (data) => <p>Success({data})</p>,
         <p>Loading</p>,
@@ -67,22 +67,22 @@ describe("`useSuspenseRender` Testing", () => {
       expect(state2.children?.join("")).toEqual("Error(Err)");
     });
   });
-  it("When the async task succeeds(with provider)", async () => {
+  it("renderSuccess(with provider)", async () => {
     const TestComponent = () => {
-      const asyncTask = useCallback(
+      const task = useCallback(
         async () =>
           new Promise((resolve) => {
             setTimeout(resolve, 100);
           }),
         [],
       );
-      const [suspenseRender, runAsyncTask] = useSuspenseRender<string>();
+      const [suspenseRender, runTask] = useSuspenseRender<string>();
       useEffect(() => {
-        runAsyncTask(async () => {
-          await asyncTask();
+        runTask(async () => {
+          await task();
           return "Aaa";
         });
-      }, [asyncTask, runAsyncTask]);
+      }, [task, runTask]);
       return suspenseRender((data) => <p>Success({data})</p>);
     };
     const component = ReactTestRender.create(
@@ -103,22 +103,22 @@ describe("`useSuspenseRender` Testing", () => {
       expect(state2.children?.join("")).toEqual("Success(Aaa)");
     });
   });
-  it("When the async task encounters an error(with provider)", async () => {
+  it("renderError(with provider)", async () => {
     const TestComponent = () => {
-      const asyncTask = useCallback(
+      const task = useCallback(
         async () =>
           new Promise((_, reject) => {
             setTimeout(() => reject(new Error("Err")), 100);
           }),
         [],
       );
-      const [suspenseRender, runAsyncTask] = useSuspenseRender<string>();
+      const [suspenseRender, runTask] = useSuspenseRender<string>();
       useEffect(() => {
-        runAsyncTask(async () => {
-          await asyncTask();
+        runTask(async () => {
+          await task();
           return "Aaa";
         });
-      }, [asyncTask, runAsyncTask]);
+      }, [task, runTask]);
       return suspenseRender((data) => <p>Success({data})</p>);
     };
     const component = ReactTestRender.create(
@@ -139,24 +139,24 @@ describe("`useSuspenseRender` Testing", () => {
       expect(state2.children?.join("")).toEqual("Error(Provider)");
     });
   });
-  it("When the async task succeeds(with options.defaultData)", async () => {
+  it("renderSuccess(with defaultData)", async () => {
     const TestComponent = () => {
-      const asyncTask = useCallback(
+      const task = useCallback(
         async () =>
           new Promise((resolve) => {
             setTimeout(resolve, 100);
           }),
         [],
       );
-      const [suspenseRender, runAsyncTask] = useSuspenseRender<string>({
+      const [suspenseRender, runTask] = useSuspenseRender<string>({
         defaultData: "DefaultData",
       });
       useEffect(() => {
-        runAsyncTask(async () => {
-          await asyncTask();
+        runTask(async () => {
+          await task();
           return "Aaa";
         });
-      }, [asyncTask, runAsyncTask]);
+      }, [task, runTask]);
       return suspenseRender((data) => <p>Success({data})</p>, <p>Loading</p>, <p>Error</p>);
     };
     const component = ReactTestRender.create(<TestComponent />);
@@ -166,6 +166,43 @@ describe("`useSuspenseRender` Testing", () => {
       await delay(100 * 2);
       const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
       expect(state2.children?.join("")).toEqual("Success(Aaa)");
+    });
+  });
+  it("renderSuccess(with taskRunnerInterceptor", async () => {
+    const TestComponent = () => {
+      const task = useCallback(
+        async () =>
+          new Promise((resolve) => {
+            setTimeout(resolve, 100);
+          }),
+        [],
+      );
+      const [suspenseRender, runTask] = useSuspenseRender<string>();
+      useEffect(() => {
+        runTask(async () => {
+          await task();
+          return "Aaa";
+        });
+      }, [task, runTask]);
+      return suspenseRender((data) => <p>Success({data})</p>, <p>Loading</p>, <p>Error</p>);
+    };
+    const component = ReactTestRender.create(
+      <SuspenseRenderProvider
+        experimentals={{
+          taskRunnerInterceptor: () => {
+            return "Bbb";
+          },
+        }}
+      >
+        <TestComponent />
+      </SuspenseRenderProvider>,
+    );
+    const state1 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+    expect(state1.children?.join("")).toEqual("Loading");
+    await ReactTestRender.act(async () => {
+      await delay(100 * 2);
+      const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+      expect(state2.children?.join("")).toEqual("Success(Bbb)");
     });
   });
 });

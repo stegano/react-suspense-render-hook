@@ -22,32 +22,36 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
   /**
    * Run `task` function
    */
-  const runTask: TaskRunner<Data> = useCallback((task) => {
-    const promise = task();
-    if (promise instanceof Promise) {
-      setTaskState({ status: TaskStatus.PENDING, promise });
-      promise
-        .then((value) => {
-          setTaskState({
-            status: TaskStatus.RESOLVED,
-            data: value,
-            promise,
+  const taskRunner: TaskRunner<Data> = useCallback(
+    (task, taskId?: string) => {
+      const taskRunnerInterceptor = context.experimentals?.taskRunnerInterceptor;
+      const promise = taskRunnerInterceptor ? taskRunnerInterceptor(task, taskId) : task();
+      if (promise instanceof Promise) {
+        setTaskState({ status: TaskStatus.PENDING, promise });
+        promise
+          .then((value) => {
+            setTaskState({
+              status: TaskStatus.RESOLVED,
+              data: value,
+              promise,
+            });
+          })
+          .catch((taskError) => {
+            setTaskState({
+              status: TaskStatus.REJECTED,
+              error: taskError,
+              promise,
+            });
           });
-        })
-        .catch((taskError) => {
-          setTaskState({
-            status: TaskStatus.REJECTED,
-            error: taskError,
-            promise,
-          });
-        });
-      return task;
-    }
-    // eslint-disable-next-line no-underscore-dangle, @typescript-eslint/naming-convention
-    const _promise = Promise.resolve(promise);
-    setTaskState({ status: TaskStatus.PENDING, promise: _promise });
-    return _promise;
-  }, []);
+        return task;
+      }
+      // eslint-disable-next-line no-underscore-dangle, @typescript-eslint/naming-convention
+      const _promise = Promise.resolve(promise);
+      setTaskState({ status: TaskStatus.RESOLVED, promise: _promise, data: promise });
+      return _promise;
+    },
+    [context],
+  );
 
   /**
    * Render component
@@ -94,7 +98,7 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
     ],
   );
 
-  return [suspenseRender, runTask, taskState.data, taskState.error, taskState.status];
+  return [suspenseRender, taskRunner, taskState.data, taskState.error, taskState.status];
 };
 
 export default useSuspenseRender;

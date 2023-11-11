@@ -18,7 +18,7 @@ export interface Task<Data extends any = any> {
  * The `TaskRunner` is a function that accepts an `Task`.
  */
 export interface TaskRunner<Data extends any = any> {
-  (task: Task<Data>): void;
+  (task: Task<Data>, taskId?: string): void;
 }
 
 /**

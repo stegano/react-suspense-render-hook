@@ -1,5 +1,14 @@
 import { PropsWithChildren } from "react";
-import { RenderError, RenderLoading, RenderSuccess } from "../hooks/use-suspense-render.interface";
+import type {
+  RenderError,
+  RenderLoading,
+  RenderSuccess,
+  Task,
+} from "../hooks/use-suspense-render.interface";
+
+export interface TaskRunnerInterceptor<Data extends any = any> {
+  (task: Task<Data>, taskId?: string): Data;
+}
 
 export interface Context<Data extends any = any, TaskError extends Error | unknown = unknown> {
   /**
@@ -14,6 +23,15 @@ export interface Context<Data extends any = any, TaskError extends Error | unkno
    * The `error` component or render function.
    */
   renderError?: RenderError<TaskError>;
+  /**
+   * Experimentals
+   */
+  experimentals?: {
+    /**
+     * `taskRunnerInterceptor` can intercept and transform input tasks.
+     */
+    taskRunnerInterceptor?: TaskRunnerInterceptor<Data>;
+  };
 }
 
 export type Props = PropsWithChildren<Context>;
