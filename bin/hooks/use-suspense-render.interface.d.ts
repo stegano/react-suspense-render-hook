@@ -1,68 +1,70 @@
 /// <reference types="react" />
 /**
- * The `AsyncTaskStatus` is task of each status.
+ * The `TaskStatus` is task of each status.
  */
-export declare enum AsyncTaskStatus {
+export declare enum TaskStatus {
     PENDING = 0,
     RESOLVED = 1,
     REJECTED = 2
 }
 /**
- * The `AsyncTask` is a function that returns a promise.
+ * The `Task` is a function that returns a promise.
  */
-export interface AsyncTask<Data extends any = any> {
-    (): Promise<Data>;
+export interface Task<Data extends any = any> {
+    (): Promise<Data> | Data;
 }
 /**
- * The `AsyncTaskRunner` is a function that accepts an `AsyncTask`.
+ * The `TaskRunner` is a function that accepts an `Task`.
  */
-export interface AsyncTaskRunner<Data extends any = any> {
-    (asyncTask: AsyncTask<Data>): void;
+export interface TaskRunner<Data extends any = any> {
+    (task: Task<Data>, taskId?: string): void;
 }
 /**
  * When the async task is resolved, the data will be passed to the success render function.
  */
-export type SuspenseRenderSuccess<Data> = React.ReactNode | ((data?: Data) => React.ReactNode);
+export type RenderSuccessFunction<Data> = (data: Data, id?: string) => React.ReactNode;
+export type RenderSuccess<Data> = React.ReactNode | RenderSuccessFunction<Data>;
 /**
  * When the async task is pending, the loading render function will be called.
  */
-export type SuspenseRenderLoading<Data> = React.ReactNode | ((data?: Promise<Data>) => React.ReactNode);
+export type RenderLoadingFunction<Data> = (data?: Promise<Data>, id?: string) => React.ReactNode;
+export type RenderLoading<Data> = React.ReactNode | RenderLoadingFunction<Data>;
 /**
  * When the async task is rejected, the error render function will be called.
  */
-export type SuspenseRenderError<AsyncTaskError extends Error | unknown = unknown> = React.ReactNode | ((error: AsyncTaskError) => React.ReactNode);
+export type RenderErrorFunction<TaskError> = (error: TaskError, id?: string) => React.ReactNode;
+export type RenderError<TaskError extends Error | unknown = unknown> = React.ReactNode | RenderErrorFunction<TaskError>;
 /**
  * The render function for the Suspense component.
  */
-export interface SuspenseRender<Data = any, AsyncTaskError = any> {
-    (success?: SuspenseRenderSuccess<Data>, loading?: SuspenseRenderLoading<Data>, error?: SuspenseRenderError<AsyncTaskError>): React.ReactNode;
+export interface SuspenseRender<Data = any, TaskError = any> {
+    (renderSuccess?: RenderSuccess<Data>, renderLoading?: RenderLoading<Data>, renderError?: RenderError<TaskError>): React.ReactNode;
 }
 /**
- * The `AsyncState` is only used internally `useSuspenseRender` hook.
+ * The `TaskState` is only used internally `useSuspenseRender` hook.
  */
-export interface AsyncState<Data, AsyncTaskError> {
-    taskStatus: AsyncTaskStatus;
-    taskError?: AsyncTaskError;
-    taskPromise?: Promise<Data>;
+export interface TaskState<Data, TaskError> {
+    status: TaskStatus;
+    error?: TaskError;
+    promise?: Promise<Data>;
     data?: Data;
 }
 /**
  * The return values of the `useSuspenseRender` hook.
  */
-export type ReturnValues<Data, AsyncTaskError> = [
-    SuspenseRender<Data, AsyncTaskError>,
-    AsyncTaskRunner<Data>,
+export type ReturnValues<Data, TaskError> = [
+    SuspenseRender<Data, TaskError>,
+    TaskRunner<Data>,
     Data | undefined,
-    AsyncTaskError | undefined,
-    AsyncTaskStatus
+    TaskError | undefined,
+    TaskStatus
 ];
 /**
  * The options of the `useSuspenseRender` hook.
  */
-export interface Options {
+export interface Options<Data extends any = any> {
     /**
-     * If true, it considers the async task successful and renders it immediately.
-     * @default false
+     * The default data.
      */
-    immediatelyRenderSuccess?: boolean;
+    defaultData?: Data;
 }

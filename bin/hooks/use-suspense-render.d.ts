@@ -1,3 +1,3 @@
 import { type ReturnValues, Options } from "./use-suspense-render.interface";
-declare const useSuspenseRedner: <Data extends unknown = any, AsyncTaskError = unknown>(options?: Options) => ReturnValues<Data, AsyncTaskError>;
-export default useSuspenseRedner;
+declare const useSuspenseRender: <Data extends unknown = any, TaskError = unknown>(options?: Options<Data>) => ReturnValues<Data, TaskError>;
+export default useSuspenseRender;
