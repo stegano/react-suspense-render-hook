@@ -24,31 +24,35 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
    */
   const taskRunner: TaskRunner<Data> = useCallback(
     (task, taskId?: string) => {
-      const taskRunnerInterceptor = context.experimentals?.taskRunnerInterceptor;
-      const promise = taskRunnerInterceptor ? taskRunnerInterceptor(task, taskId) : task();
-      if (promise instanceof Promise) {
-        setTaskState({ status: TaskStatus.PENDING, promise });
-        promise
-          .then((value) => {
-            setTaskState({
-              status: TaskStatus.RESOLVED,
-              data: value,
-              promise,
+      try {
+        const taskRunnerInterceptor = context.experimentals?.taskRunnerInterceptor;
+        const promise = taskRunnerInterceptor ? taskRunnerInterceptor(task, taskId) : task();
+        if (promise instanceof Promise) {
+          setTaskState({ status: TaskStatus.PENDING, promise });
+          promise
+            .then((data) => {
+              setTaskState({
+                status: TaskStatus.RESOLVED,
+                data,
+                promise,
+              });
+            })
+            .catch((error) => {
+              setTaskState({
+                status: TaskStatus.REJECTED,
+                error,
+                promise,
+              });
             });
-          })
-          .catch((taskError) => {
-            setTaskState({
-              status: TaskStatus.REJECTED,
-              error: taskError,
-              promise,
-            });
-          });
-        return task;
+          return;
+        }
+        const data = promise;
+        setTaskState({ status: TaskStatus.RESOLVED, data });
+      } catch (e) {
+        const error = e as TaskError;
+        setTaskState({ status: TaskStatus.REJECTED, error });
+        throw e;
       }
-      // eslint-disable-next-line no-underscore-dangle, @typescript-eslint/naming-convention
-      const _promise = Promise.resolve(promise);
-      setTaskState({ status: TaskStatus.RESOLVED, promise: _promise, data: promise });
-      return _promise;
     },
     [context],
   );
