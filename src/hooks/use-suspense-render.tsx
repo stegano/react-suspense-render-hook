@@ -29,24 +29,8 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
         const promise = taskRunnerInterceptor ? taskRunnerInterceptor(task, taskId) : task();
         if (promise instanceof Promise) {
           setTaskState({ status: TaskStatus.PENDING, promise });
-          promise
-            .then((data) => {
-              setTaskState({
-                status: TaskStatus.RESOLVED,
-                data,
-                promise,
-              });
-            })
-            .catch((error) => {
-              setTaskState({
-                status: TaskStatus.REJECTED,
-                error,
-                promise,
-              });
-            });
-          return;
         }
-        const data = promise;
+        const data = await promise;
         setTaskState({ status: TaskStatus.RESOLVED, data });
       } catch (e) {
         const error = e as TaskError;
