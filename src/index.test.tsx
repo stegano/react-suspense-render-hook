@@ -25,15 +25,15 @@ describe("`useSuspenseRender` Testing", () => {
           return "Aaa";
         });
       }, [asyncTask, runAsyncTask]);
-      return suspenseRender((data) => <p>Success{data}</p>, <p>Loading</p>, <p>Error</p>);
+      return suspenseRender((data) => <p>Success({data})</p>, <p>Loading</p>, <p>Error</p>);
     };
     const component = ReactTestRender.create(<TestComponent />);
     const state1 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
-    expect(state1.children).toEqual(["Loading"]);
+    expect(state1.children?.join("")).toEqual("Loading");
     await ReactTestRender.act(async () => {
       await delay(100 * 2);
       const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
-      expect(state2.children).toEqual(["Success", "Aaa"]);
+      expect(state2.children?.join("")).toEqual("Success(Aaa)");
     });
   });
   it("When the async task encounters an error", async () => {
@@ -53,18 +53,18 @@ describe("`useSuspenseRender` Testing", () => {
         });
       }, [asyncErrorTask, runAsyncTask]);
       return suspenseRender(
-        (data) => <p>Success{data}</p>,
+        (data) => <p>Success({data})</p>,
         <p>Loading</p>,
-        (e) => <p>Error{e.message}</p>,
+        (e) => <p>Error({e.message})</p>,
       );
     };
     const component = ReactTestRender.create(<TestComponent />);
     const state1 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
-    expect(state1.children).toEqual(["Loading"]);
+    expect(state1.children?.join("")).toEqual("Loading");
     await ReactTestRender.act(async () => {
       await delay(100 * 2);
       const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
-      expect(state2.children).toEqual(["Error", "Err"]);
+      expect(state2.children?.join("")).toEqual("Error(Err)");
     });
   });
   it("When the async task succeeds(with provider)", async () => {
@@ -83,21 +83,24 @@ describe("`useSuspenseRender` Testing", () => {
           return "Aaa";
         });
       }, [asyncTask, runAsyncTask]);
-      return suspenseRender((data) => <p>Success{data}</p>, undefined);
+      return suspenseRender((data) => <p>Success({data})</p>);
     };
     const component = ReactTestRender.create(
-      <SuspenseRenderProvider success={<p>Success(Provider)</p>} loading={<p>Loading(Provider)</p>}>
+      <SuspenseRenderProvider
+        renderSuccess={<p>Success(Provider)</p>}
+        renderLoading={<p>Loading(Provider)</p>}
+      >
         <TestComponent />
       </SuspenseRenderProvider>,
     );
     const state1 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
     // The provider is used because the component does not have its own render function.
-    expect(state1.children).toEqual(["Loading(Provider)"]);
+    expect(state1.children?.join("")).toEqual("Loading(Provider)");
     await ReactTestRender.act(async () => {
       await delay(100 * 2);
       const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
       // The provider is not used because the component has its own render function.
-      expect(state2.children).toEqual(["Success", "Aaa"]);
+      expect(state2.children?.join("")).toEqual("Success(Aaa)");
     });
   });
   it("When the async task encounters an error(with provider)", async () => {
@@ -116,24 +119,27 @@ describe("`useSuspenseRender` Testing", () => {
           return "Aaa";
         });
       }, [asyncTask, runAsyncTask]);
-      return suspenseRender((data) => <p>Success{data}</p>);
+      return suspenseRender((data) => <p>Success({data})</p>);
     };
     const component = ReactTestRender.create(
-      <SuspenseRenderProvider error={<p>Error(Provider)</p>} loading={<p>Loading(Provider)</p>}>
+      <SuspenseRenderProvider
+        renderError={<p>Error(Provider)</p>}
+        renderLoading={<p>Loading(Provider)</p>}
+      >
         <TestComponent />
       </SuspenseRenderProvider>,
     );
     const state1 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
     // The provider is used because the component does not have its own render function.
-    expect(state1.children).toEqual(["Loading(Provider)"]);
+    expect(state1.children?.join("")).toEqual("Loading(Provider)");
     await ReactTestRender.act(async () => {
       await delay(100 * 2);
       const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
       // The provider is not used because the component has its own render function.
-      expect(state2.children).toEqual(["Error(Provider)"]);
+      expect(state2.children?.join("")).toEqual("Error(Provider)");
     });
   });
-  it("When the async task succeeds(with immediatelyRenderSuccess)", async () => {
+  it("When the async task succeeds(with options.defaultData)", async () => {
     const TestComponent = () => {
       const asyncTask = useCallback(
         async () =>
@@ -143,7 +149,7 @@ describe("`useSuspenseRender` Testing", () => {
         [],
       );
       const [suspenseRender, runAsyncTask] = useSuspenseRender<string>({
-        immediatelyRenderSuccess: true,
+        defaultData: "DefaultData",
       });
       useEffect(() => {
         runAsyncTask(async () => {
@@ -151,15 +157,15 @@ describe("`useSuspenseRender` Testing", () => {
           return "Aaa";
         });
       }, [asyncTask, runAsyncTask]);
-      return suspenseRender((data) => <p>Success{data}</p>, <p>Loading</p>, <p>Error</p>);
+      return suspenseRender((data) => <p>Success({data})</p>, <p>Loading</p>, <p>Error</p>);
     };
     const component = ReactTestRender.create(<TestComponent />);
     const state1 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
-    expect(state1.children).toEqual(["Success"]);
+    expect(state1.children?.join("")).toEqual("Success(DefaultData)");
     await ReactTestRender.act(async () => {
       await delay(100 * 2);
       const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
-      expect(state2.children).toEqual(["Success", "Aaa"]);
+      expect(state2.children?.join("")).toEqual("Success(Aaa)");
     });
   });
 });

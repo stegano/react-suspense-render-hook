@@ -3,13 +3,14 @@ import { Context, Props } from "./suspense-render.interface";
 
 export const SuspenseRenderContext = createContext<Context>({});
 
-function SuspenseRenderProvider({ children, loading, error }: Props) {
+function SuspenseRenderProvider({ children, renderSuccess, renderLoading, renderError }: Props) {
   const state = useMemo(
     () => ({
-      loading,
-      error,
+      renderSuccess,
+      renderLoading,
+      renderError,
     }),
-    [error, loading],
+    [renderError, renderLoading, renderSuccess],
   );
   return <SuspenseRenderContext.Provider value={state}>{children}</SuspenseRenderContext.Provider>;
 }

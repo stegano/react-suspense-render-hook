@@ -9,7 +9,8 @@
     "eslint:fix": "eslint '{src,pages}/**/*.{ts,tsx}' --fix",
     "build": "rm -rf ./bin && webpack --config ./webpack.config.js",
     "deploy": "npm run build && npm publish --access=public",
-    "test": "jest"
+    "test": "jest",
+    "ts-check": "tsc --noEmit"
   },
   "author": "Yongwoo Jung<stegano@naver.com>",
   "license": "MIT",
