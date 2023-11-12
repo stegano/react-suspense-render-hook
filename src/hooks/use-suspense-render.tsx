@@ -48,13 +48,13 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
       const { data, status, error, promise } = taskState;
       switch (status) {
         case TaskStatus.RESOLVED: {
-          const render = renderSuccess ?? context.renderSuccess;
+          const render = (renderSuccess ?? context.renderSuccess) || null;
           return typeof render === "function"
             ? render((data || options.defaultData) as Data)
             : render;
         }
         case TaskStatus.REJECTED: {
-          const render = renderError ?? context.renderError;
+          const render = (renderError ?? context.renderError) || null;
           if (typeof render === undefined) {
             /**
              * Propagate the error upwards if the error component does not exist,
@@ -71,7 +71,7 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
         }
         case TaskStatus.PENDING:
         default: {
-          const render = renderLoading ?? context.renderLoading;
+          const render = (renderLoading ?? context.renderLoading) || null;
           return typeof render === "function" ? render(promise) : render;
         }
       }
