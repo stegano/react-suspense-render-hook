@@ -1,4 +1,4 @@
-/// <reference types="react" />
+import { ReactElement } from "react";
 /**
  * The `TaskStatus` is task of each status.
  */
@@ -22,23 +22,23 @@ export interface TaskRunner<Data extends any = any> {
 /**
  * When the async task is resolved, the data will be passed to the success render function.
  */
-export type RenderSuccessFunction<Data> = (data: Data, id?: string) => React.ReactNode;
-export type RenderSuccess<Data> = React.ReactNode | RenderSuccessFunction<Data>;
+export type RenderSuccessFunction<Data> = (data: Data, id?: string) => ReactElement | null;
+export type RenderSuccess<Data> = ReactElement | RenderSuccessFunction<Data> | null;
 /**
  * When the async task is pending, the loading render function will be called.
  */
-export type RenderLoadingFunction<Data> = (data?: Promise<Data>, id?: string) => React.ReactNode;
-export type RenderLoading<Data> = React.ReactNode | RenderLoadingFunction<Data>;
+export type RenderLoadingFunction<Data> = (data?: Promise<Data>, id?: string) => ReactElement | null;
+export type RenderLoading<Data> = ReactElement | RenderLoadingFunction<Data> | null;
 /**
  * When the async task is rejected, the error render function will be called.
  */
-export type RenderErrorFunction<TaskError> = (error: TaskError, id?: string) => React.ReactNode;
-export type RenderError<TaskError extends Error | unknown = unknown> = React.ReactNode | RenderErrorFunction<TaskError>;
+export type RenderErrorFunction<TaskError> = (error: TaskError, id?: string) => ReactElement | null;
+export type RenderError<TaskError extends Error | unknown = unknown> = ReactElement | null | RenderErrorFunction<TaskError>;
 /**
  * The render function for the Suspense component.
  */
 export interface SuspenseRender<Data = any, TaskError = any> {
-    (renderSuccess?: RenderSuccess<Data>, renderLoading?: RenderLoading<Data>, renderError?: RenderError<TaskError>): React.ReactNode;
+    (renderSuccess?: RenderSuccess<Data>, renderLoading?: RenderLoading<Data>, renderError?: RenderError<TaskError>): ReactElement | null;
 }
 /**
  * The `TaskState` is only used internally `useSuspenseRender` hook.
