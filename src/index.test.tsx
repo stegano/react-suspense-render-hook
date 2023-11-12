@@ -168,7 +168,7 @@ describe("`useSuspenseRender` Testing", () => {
       expect(state2.children?.join("")).toEqual("Success(Aaa)");
     });
   });
-  it("renderSuccess(with taskRunnerInterceptor", async () => {
+  it("renderSuccess(single taskRunnerInterceptor)", async () => {
     const TestComponent = () => {
       const task = useCallback(
         async () =>
@@ -189,9 +189,56 @@ describe("`useSuspenseRender` Testing", () => {
     const component = ReactTestRender.create(
       <SuspenseRenderProvider
         experimentals={{
-          taskRunnerInterceptor: () => {
-            return "Bbb";
-          },
+          taskRunnerInterceptors: [
+            () => {
+              return "Bbb";
+            },
+          ],
+        }}
+      >
+        <TestComponent />
+      </SuspenseRenderProvider>,
+    );
+    const state1 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+    expect(state1.children?.join("")).toEqual("Loading");
+    await ReactTestRender.act(async () => {
+      await delay(100 * 2);
+      const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+      expect(state2.children?.join("")).toEqual("Success(Bbb)");
+    });
+  });
+  it("renderSuccess(multiple taskRunnerInterceptors)", async () => {
+    const TestComponent = () => {
+      const task = useCallback(
+        async () =>
+          new Promise((resolve) => {
+            setTimeout(resolve, 100);
+          }),
+        [],
+      );
+      const [suspenseRender, runTask] = useSuspenseRender<string>();
+      useEffect(() => {
+        runTask(async () => {
+          await task();
+          return "Aaa";
+        });
+      }, [task, runTask]);
+      return suspenseRender((data) => <p>Success({data})</p>, <p>Loading</p>, <p>Error</p>);
+    };
+    const component = ReactTestRender.create(
+      <SuspenseRenderProvider
+        experimentals={{
+          taskRunnerInterceptors: [
+            () => {
+              return "B";
+            },
+            (prev) => {
+              return `${prev}b`;
+            },
+            (prev) => {
+              return `${prev}b`;
+            },
+          ],
         }}
       >
         <TestComponent />

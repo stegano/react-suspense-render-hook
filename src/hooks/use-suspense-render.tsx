@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 import { useState, useCallback, useContext } from "react";
 import {
   TaskStatus,
@@ -25,8 +26,19 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
   const taskRunner: TaskRunner<Data> = useCallback(
     async (task, taskId?: string) => {
       try {
-        const taskRunnerInterceptor = context.experimentals?.taskRunnerInterceptor;
-        const promise = taskRunnerInterceptor ? taskRunnerInterceptor(task, taskId) : task();
+        const taskRunnerInterceptors = context.experimentals?.taskRunnerInterceptors;
+        let taskRunnerInterceptorsResult: Data | undefined;
+        if (taskRunnerInterceptors) {
+          for (const interceptor of taskRunnerInterceptors) {
+            // eslint-disable-next-line no-await-in-loop
+            taskRunnerInterceptorsResult = await interceptor(
+              taskRunnerInterceptorsResult,
+              task,
+              taskId,
+            );
+          }
+        }
+        const promise = taskRunnerInterceptorsResult ?? task();
         if (promise instanceof Promise) {
           setTaskState({ status: TaskStatus.PENDING, promise });
         }

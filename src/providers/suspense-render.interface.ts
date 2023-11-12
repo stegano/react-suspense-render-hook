@@ -7,7 +7,7 @@ import type {
 } from "../hooks/use-suspense-render.interface";
 
 export interface TaskRunnerInterceptor<Data extends any = any> {
-  (task: Task<Data>, taskId?: string): Data;
+  (prevData: Data | undefined, task: Task<Data>, taskId?: string): Data;
 }
 
 export interface Context<Data extends any = any, TaskError extends Error | unknown = unknown> {
@@ -28,9 +28,9 @@ export interface Context<Data extends any = any, TaskError extends Error | unkno
    */
   experimentals?: {
     /**
-     * `taskRunnerInterceptor` can intercept and transform input tasks.
+     * `taskRunnerInterceptors` can intercept and transform input tasks.
      */
-    taskRunnerInterceptor?: TaskRunnerInterceptor<Data>;
+    taskRunnerInterceptors?: TaskRunnerInterceptor<Data>[];
   };
 }
 
