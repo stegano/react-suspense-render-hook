@@ -76,24 +76,44 @@ Demo: https://stackblitz.com/edit/stackblitz-starters-pgefl6
 The `SuspenseRenderProvider` allows for predefined loading or error components to be set externally.
 
 ```tsx
-import { SuspenseRenderProvider, useSuspenseRender } from "react-suspense-render-hook";
-
-const App = ({ children }) => {
-  return (
-    <SuspenseRenderProvider loading={<p>Loading..</p>} error={<p>Error!</p>}>
-      <DataComponent />
-    </SuspenseRenderProvider>
-  )
-}
-
-// ...
+import { useCallback, useEffect } from 'react';
+import {
+  SuspenseRenderProvider,
+  useSuspenseRender,
+} from 'react-suspense-render-hook';
 
 const DataComponent = () => {
-  const [ suspenseRender ] = useSuspenseRender(asyncTask);
-  // If not specified, components defined in `SuspenseRenderProvider` are used for `loading` or `error`.
-  return suspenseRender(
-    <p>Success</p>
+  // Asynchronous task function
+  const asyncTask = useCallback(
+    () =>
+      new Promise<any>((resolve) => {
+        setTimeout(resolve, 1000 * 1);
+      }),
+    []
   );
-}
+
+  const [suspenseRender, runAsyncTask] = useSuspenseRender();
+
+  useEffect(() => {
+    runAsyncTask(async () => {
+      await asyncTask();
+    });
+  }, []);
+
+  // If not specified, components defined in `SuspenseRenderProvider` are used for `renderLoading` or `renderError`.
+  return suspenseRender(<p>Success</p>);
+};
+
+export const App = ({ children }) => {
+  return (
+    <SuspenseRenderProvider
+      renderLoading={<p>Loading..☀️</p>}
+      renderError={<p>Error!</p>}
+    >
+      <DataComponent />
+    </SuspenseRenderProvider>
+  );
+};
+
 ```
 Demo: https://stackblitz.com/edit/stackblitz-starters-bwapyp
