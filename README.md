@@ -82,7 +82,7 @@ import {
   useSuspenseRender,
 } from 'react-suspense-render-hook';
 
-const DataComponent = () => {
+const Component = () => {
   // Asynchronous task function
   const asyncTask = useCallback(
     () =>
@@ -110,10 +110,71 @@ export const App = ({ children }) => {
       renderLoading={<p>Loading..☀️</p>}
       renderError={<p>Error!</p>}
     >
-      <DataComponent />
+      <Component />
     </SuspenseRenderProvider>
   );
 };
 
 ```
 Demo: https://stackblitz.com/edit/stackblitz-starters-bwapyp
+
+## 🧐 Experimental features
+
+### taskRunnerInterceptors
+`taskRunnerInterceptors` can intercept `taskRunner` execution, allowing you to transform it. It can be useful for adding logs for data processing or injecting dummy data for use in Storybook and testing environments.
+
+```tsx
+import { useCallback, useEffect } from 'react';
+import {
+  SuspenseRenderProvider,
+  useSuspenseRender,
+} from 'react-suspense-render-hook';
+
+const Component = () => {
+  // Asynchronous task function
+  const asyncTask = useCallback(async () => {
+    // e.g., return (await axios.get('.../data.json')).data.greeting;
+    return 'Hi';
+  }, []);
+
+  const [suspenseRender, runAsyncTask] = useSuspenseRender<string>();
+
+  useEffect(() => {
+    runAsyncTask(async () => {
+      const greeting = await asyncTask();
+      return greeting;
+    }, 'greeting');
+  }, []);
+
+  return suspenseRender((greeting) => <p>{greeting}</p>);
+};
+
+export const App = ({ children }) => {
+  return (
+    <SuspenseRenderProvider
+      renderLoading={<p>Loading..☀️</p>}
+      renderError={<p>Error!</p>}
+      experimentals={{
+        taskRunnerInterceptors: [
+          async (_prevInterceptorResult, asyncTaskFunction, taskId) => {
+            if (taskId === 'greeting') {
+              return 'Hello';
+            }
+            return await asyncTaskFunction();
+          },
+          async (prevInterceptorResult, asyncTaskFunction, taskId) => {
+            if (taskId === 'greeting') {
+              // When `renderSuccess` is executed, it displays the text `Hello 😀`.
+              return `${prevInterceptorResult} 😀`;
+            }
+            return await asyncTaskFunction();
+          },
+        ],
+      }}
+    >
+      <Component />
+    </SuspenseRenderProvider>
+  );
+};
+```
+Demo: https://stackblitz.com/edit/stackblitz-starters-4qxzui
