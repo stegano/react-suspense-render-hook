@@ -207,6 +207,68 @@ describe("`useSuspenseRender` Testing", () => {
       expect(state2.children?.join("")).toEqual("Success(Bbb)");
     });
   });
+  it("renderSuccess(single taskRunnerInterceptor with re-load data)", async () => {
+    const TestComponent = () => {
+      const task = useCallback(
+        async () =>
+          new Promise((resolve) => {
+            setTimeout(resolve, 100);
+          }),
+        [],
+      );
+      const [suspenseRender, runTask] = useSuspenseRender<string>();
+      useEffect(() => {
+        runTask(async () => {
+          await task();
+          return "Aaa";
+        });
+      }, [task, runTask]);
+      return suspenseRender(
+        (data) => (
+          <button
+            type="button"
+            onClick={() => {
+              runTask(async () => {
+                await task();
+                return "Reloaded";
+              });
+            }}
+          >
+            Success({data})
+          </button>
+        ),
+        <p>Loading</p>,
+        <p>Error</p>,
+      );
+    };
+    const component = ReactTestRender.create(
+      <SuspenseRenderProvider
+        experimentals={{
+          taskRunnerInterceptors: [
+            async () => {
+              await delay(100);
+              return "Bbb";
+            },
+          ],
+        }}
+      >
+        <TestComponent />
+      </SuspenseRenderProvider>,
+    );
+    const state1 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+    expect(state1.children?.join("")).toEqual("Loading");
+    await ReactTestRender.act(async () => {
+      await delay(100 * 2);
+      const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+      expect(state2.children?.join("")).toEqual("Success(Bbb)");
+      // state2.props.onClick();
+      // const state3 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+      // expect(state3.children?.join("")).toEqual("Loading");
+      // await delay(100 * 2);
+      // const state4 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+      // expect(state4.children?.join("")).toEqual("Success(Bbb)");
+    });
+  });
   it("renderSuccess(multiple taskRunnerInterceptors)", async () => {
     const TestComponent = () => {
       const task = useCallback(

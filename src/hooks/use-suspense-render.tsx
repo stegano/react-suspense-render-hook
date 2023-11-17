@@ -27,23 +27,23 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
     async (task, taskId?: string) => {
       try {
         const taskRunnerInterceptors = context.experimentals?.taskRunnerInterceptors;
-        let taskRunnerInterceptorsResult: Data | undefined;
         if (taskRunnerInterceptors) {
-          for (const interceptor of taskRunnerInterceptors) {
+          let taskResult;
+          for (const taskRunnerInterceptor of taskRunnerInterceptors) {
             // eslint-disable-next-line no-await-in-loop
-            taskRunnerInterceptorsResult = await interceptor(
-              taskRunnerInterceptorsResult,
-              task,
-              taskId,
-            );
+            taskResult = taskRunnerInterceptor(await taskResult, task, taskId);
+            const promise = taskResult instanceof Promise ? taskResult : undefined;
+            setTaskState({ status: TaskStatus.PENDING, promise });
           }
-        }
-        const promise = taskRunnerInterceptorsResult ?? task();
-        if (promise instanceof Promise) {
+          const data = await taskResult;
+          setTaskState({ status: TaskStatus.RESOLVED, data });
+        } else {
+          const taskResult = task();
+          const promise = taskResult instanceof Promise ? taskResult : undefined;
           setTaskState({ status: TaskStatus.PENDING, promise });
+          const data = await taskResult;
+          setTaskState({ status: TaskStatus.RESOLVED, data });
         }
-        const data = await promise;
-        setTaskState({ status: TaskStatus.RESOLVED, data });
       } catch (e) {
         const error = e as TaskError;
         setTaskState({ status: TaskStatus.REJECTED, error });
