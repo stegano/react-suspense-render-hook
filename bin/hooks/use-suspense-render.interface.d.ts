@@ -16,8 +16,8 @@ export interface Task<Data extends any = any> {
 /**
  * The `TaskRunner` is a function that accepts an `Task`.
  */
-export interface TaskRunner<Data extends any = any> {
-    (task: Task<Data>, taskId?: string): void;
+export interface TaskRunner<Data, TaskError> {
+    (task: Task<Data>, taskId?: string): Promise<Data | TaskError>;
 }
 /**
  * When the async task is resolved, the data will be passed to the success render function.
@@ -54,7 +54,7 @@ export interface TaskState<Data, TaskError> {
  */
 export type ReturnValues<Data, TaskError> = [
     SuspenseRender<Data, TaskError>,
-    TaskRunner<Data>,
+    TaskRunner<Data, TaskError>,
     Data | undefined,
     TaskError | undefined,
     TaskStatus
