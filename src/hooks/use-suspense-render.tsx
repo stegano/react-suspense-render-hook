@@ -12,12 +12,10 @@ import { SuspenseRenderContext } from "../providers";
 import type { ISuspenseRenderProvider } from "../providers";
 
 const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
-  options: Options<Data> = {
-    defaultData: undefined,
-  },
+  options: Options<Data> = {},
 ): ReturnValues<Data, TaskError> => {
   const [taskState, setTaskState] = useState<TaskState<Data, TaskError>>({
-    status: options.defaultData ? TaskStatus.RESOLVED : TaskStatus.PENDING,
+    status: "defaultData" in options ? TaskStatus.RESOLVED : TaskStatus.PENDING,
   });
   const context = useContext<ISuspenseRenderProvider.Context>(SuspenseRenderContext);
   /**
@@ -64,7 +62,7 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
         case TaskStatus.RESOLVED: {
           const render = (renderSuccess ?? context.renderSuccess) || null;
           return typeof render === "function"
-            ? render((data || options.defaultData) as Data)
+            ? render((data ?? options.defaultData) as Data)
             : render;
         }
         case TaskStatus.REJECTED: {
