@@ -44,9 +44,11 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
           const data = await taskResult;
           setTaskState({ status: TaskStatus.RESOLVED, data });
         }
+        return true;
       } catch (e) {
         const error = e as TaskError;
         setTaskState({ status: TaskStatus.REJECTED, error });
+        return false;
       }
     },
     [context],
