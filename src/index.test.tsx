@@ -9,6 +9,10 @@ const delay = (ms: number) =>
   });
 
 describe("`useSuspenseRender` Testing", () => {
+  beforeAll(() => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
   it("renderSuccess", async () => {
     const TestComponent = () => {
       const task = useCallback(
@@ -50,7 +54,7 @@ describe("`useSuspenseRender` Testing", () => {
         runTask(async () => {
           await asyncErrorTask();
           return "Aaa";
-        });
+        }).catch(() => {});
       }, [asyncErrorTask, runTask]);
       return suspenseRender(
         (data) => <p>Success({data})</p>,
@@ -117,7 +121,7 @@ describe("`useSuspenseRender` Testing", () => {
         runTask(async () => {
           await task();
           return "Aaa";
-        });
+        }).catch(() => {});
       }, [task, runTask]);
       return suspenseRender((data) => <p>Success({data})</p>);
     };
@@ -190,7 +194,7 @@ describe("`useSuspenseRender` Testing", () => {
       <SuspenseRenderProvider
         experimentals={{
           taskRunnerInterceptors: [
-            () => {
+            async () => {
               return "Bbb";
             },
           ],
@@ -291,13 +295,13 @@ describe("`useSuspenseRender` Testing", () => {
       <SuspenseRenderProvider
         experimentals={{
           taskRunnerInterceptors: [
-            () => {
+            async () => {
               return "B";
             },
-            (prev) => {
+            async (prev) => {
               return `${prev}b`;
             },
-            (prev) => {
+            async (prev) => {
               return `${prev}b`;
             },
           ],
@@ -320,30 +324,7 @@ describe("`useSuspenseRender` Testing", () => {
       useEffect(() => {
         runTask(async () => {
           throw new Error("Error");
-        });
-      }, [runTask]);
-      return suspenseRender(<p>Success</p>, <p>Loading</p>, <p>Error</p>);
-    };
-    const component = ReactTestRender.create(<TestComponent />);
-    const state1 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
-    expect(state1.children?.join("")).toEqual("Loading");
-    await ReactTestRender.act(async () => {
-      await delay(100 * 2);
-      const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
-      expect(state2.children?.join("")).toEqual("Error");
-    });
-  });
-  it("Synchronous `taskRunner` error", async () => {
-    const TestComponent = () => {
-      const [suspenseRender, runTask] = useSuspenseRender<string>();
-      useEffect(() => {
-        try {
-          runTask(() => {
-            throw new Error("Error");
-          });
-        } catch (e) {
-          // console.log(e);
-        }
+        }).catch(() => {});
       }, [runTask]);
       return suspenseRender(<p>Success</p>, <p>Loading</p>, <p>Error</p>);
     };

@@ -30,17 +30,15 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
           for (const taskRunnerInterceptor of taskRunnerInterceptors) {
             // eslint-disable-next-line no-await-in-loop
             taskResult = taskRunnerInterceptor(await taskResult, task, taskId);
-            const promise = taskResult instanceof Promise ? taskResult : undefined;
-            setTaskState({ status: TaskStatus.PENDING, promise });
+            setTaskState({ status: TaskStatus.PENDING, promise: taskResult });
           }
           const data = await taskResult;
           setTaskState({ status: TaskStatus.RESOLVED, data });
           return data;
         }
-        const taskResult = task();
-        const promise = taskResult instanceof Promise ? taskResult : undefined;
+        const promise = task();
         setTaskState({ status: TaskStatus.PENDING, promise });
-        const data = await taskResult;
+        const data = await promise;
         setTaskState({ status: TaskStatus.RESOLVED, data });
         return data;
       } catch (e) {
