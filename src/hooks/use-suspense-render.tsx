@@ -21,7 +21,7 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
   /**
    * Run `task` function
    */
-  const taskRunner: TaskRunner<Data, TaskError> = useCallback(
+  const taskRunner: TaskRunner<Data> = useCallback(
     async (task, taskId?: string) => {
       try {
         const taskRunnerInterceptors = context.experimentals?.taskRunnerInterceptors;
@@ -46,7 +46,7 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
       } catch (e) {
         const error = e as TaskError;
         setTaskState({ status: TaskStatus.REJECTED, error });
-        return error;
+        throw e;
       }
     },
     [context],
