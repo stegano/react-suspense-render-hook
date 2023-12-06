@@ -1,7 +1,7 @@
 import { PropsWithChildren } from "react";
 import type { RenderError, RenderLoading, RenderSuccess, Task } from "../hooks/use-suspense-render.interface";
 export interface TaskRunnerInterceptor<Data extends any = any> {
-    (prevData: Data | undefined, task: Task<Data>, taskId?: string): Data;
+    (prevData: Data | undefined, task: Task<Data>, taskId?: string): Promise<Data>;
 }
 export interface Context<Data extends any = any, TaskError extends Error | unknown = unknown> {
     /**
