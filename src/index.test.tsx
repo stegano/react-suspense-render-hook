@@ -337,4 +337,54 @@ describe("`useSuspenseRender` Testing", () => {
       expect(state2.children?.join("")).toEqual("Error");
     });
   });
+  it("renderSuccess(prevData)", async () => {
+    const TestComponent = () => {
+      const task = useCallback(
+        async () =>
+          new Promise((resolve) => {
+            setTimeout(resolve, 100);
+          }),
+        [],
+      );
+      const [suspenseRender, runTask] = useSuspenseRender<string>();
+      useEffect(() => {
+        runTask(async () => {
+          await task();
+          return "Aaa";
+        });
+      }, [task, runTask]);
+      return suspenseRender(
+        (data, prevData) => {
+          return (
+            <button
+              type="button"
+              onClick={() => {
+                runTask(async () => {
+                  await task();
+                  return "Bbb";
+                });
+              }}
+            >
+              Success({data}
+              {prevData ? `, ${prevData}` : ""})
+            </button>
+          );
+        },
+        <p>Loading</p>,
+        <p>Error</p>,
+      );
+    };
+    const component = ReactTestRender.create(<TestComponent />);
+    const state1 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+    expect(state1.children?.join("")).toEqual("Loading");
+    await ReactTestRender.act(async () => {
+      await delay(100 * 2);
+      const state2 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+      expect(state2.children?.join("")).toEqual("Success(Aaa)");
+      state2.props.onClick();
+      await delay(100 * 2);
+      const state3 = component.toJSON() as ReactTestRender.ReactTestRendererJSON;
+      expect(state3.children?.join("")).toEqual("Success(Bbb, Aaa)");
+    });
+  });
 });

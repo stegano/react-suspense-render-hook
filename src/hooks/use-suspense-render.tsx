@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-syntax */
-import { useState, useCallback, useContext } from "react";
+import { useState, useCallback, useContext, useRef } from "react";
 import {
   TaskStatus,
   type SuspenseRender,
@@ -14,6 +14,7 @@ import type { ISuspenseRenderProvider } from "../providers";
 const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
   options: Options<Data> = {},
 ): ReturnValues<Data, TaskError> => {
+  const latestDataRef = useRef<Data | undefined>(options.defaultData);
   const [taskState, setTaskState] = useState<TaskState<Data, TaskError>>({
     status: "defaultData" in options ? TaskStatus.RESOLVED : TaskStatus.PENDING,
   });
@@ -56,11 +57,13 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
   const suspenseRender: SuspenseRender<Data, TaskError> = useCallback(
     (renderSuccess, renderLoading, renderError) => {
       const { data, status, error, promise } = taskState;
+      const prevData = latestDataRef.current;
       switch (status) {
         case TaskStatus.RESOLVED: {
           const render = (renderSuccess ?? context.renderSuccess) || null;
+          latestDataRef.current = data;
           return typeof render === "function"
-            ? render((data ?? options.defaultData) as Data)
+            ? render((data ?? options.defaultData) as Data, prevData)
             : render;
         }
         case TaskStatus.REJECTED: {
@@ -77,12 +80,12 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
           if (typeof error === "undefined") {
             throw new Error("The `taskError` is undefined");
           }
-          return typeof render === "function" ? render(error) : render;
+          return typeof render === "function" ? render(error, prevData) : render;
         }
         case TaskStatus.PENDING:
         default: {
           const render = (renderLoading ?? context.renderLoading) || null;
-          return typeof render === "function" ? render(promise) : render;
+          return typeof render === "function" ? render(promise, prevData) : render;
         }
       }
     },

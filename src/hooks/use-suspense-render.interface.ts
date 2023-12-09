@@ -26,7 +26,7 @@ export interface TaskRunner<Data> {
 /**
  * When the async task is resolved, the data will be passed to the success render function.
  */
-export type RenderSuccessFunction<Data> = (data: Data, id?: string) => ReactElement | null;
+export type RenderSuccessFunction<Data> = (data: Data, prevData?: Data) => ReactElement | null;
 export type RenderSuccess<Data> = ReactElement | RenderSuccessFunction<Data> | null;
 
 /**
@@ -34,18 +34,21 @@ export type RenderSuccess<Data> = ReactElement | RenderSuccessFunction<Data> | n
  */
 export type RenderLoadingFunction<Data> = (
   data?: Promise<Data>,
-  id?: string,
+  prevData?: Data,
 ) => ReactElement | null;
 export type RenderLoading<Data> = ReactElement | RenderLoadingFunction<Data> | null;
 
 /**
  * When the async task is rejected, the error render function will be called.
  */
-export type RenderErrorFunction<TaskError> = (error: TaskError, id?: string) => ReactElement | null;
-export type RenderError<TaskError extends Error | unknown = unknown> =
+export type RenderErrorFunction<TaskError, Data> = (
+  error: TaskError,
+  prevData?: Data,
+) => ReactElement | null;
+export type RenderError<TaskError extends Error | unknown = unknown, Data extends any = any> =
   | ReactElement
   | null
-  | RenderErrorFunction<TaskError>;
+  | RenderErrorFunction<TaskError, Data>;
 
 /**
  * The render function for the Suspense component.
@@ -54,7 +57,7 @@ export interface SuspenseRender<Data = any, TaskError = any> {
   (
     renderSuccess?: RenderSuccess<Data>,
     renderLoading?: RenderLoading<Data>,
-    renderError?: RenderError<TaskError>,
+    renderError?: RenderError<TaskError, Data>,
   ): ReactElement | null;
 }
 

@@ -22,7 +22,7 @@ export interface Context<Data extends any = any, TaskError extends Error | unkno
   /**
    * The `error` component or render function.
    */
-  renderError?: RenderError<TaskError>;
+  renderError?: RenderError<TaskError, Data>;
   /**
    * Experimentals
    */
