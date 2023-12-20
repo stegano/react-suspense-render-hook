@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-syntax */
-import { useState, useCallback, useContext, useRef } from "react";
+import { useState, useCallback, useContext, useRef, useEffect } from "react";
+import EventEmitter from "eventemitter3";
 import {
   TaskStatus,
   type SuspenseRender,
@@ -11,14 +12,55 @@ import {
 import { SuspenseRenderContext } from "../providers";
 import type { ISuspenseRenderProvider } from "../providers";
 
+/**
+ * A global event emitter for `useSuspenseRender`
+ */
+const emitter = new EventEmitter<string, TaskState<any, any>>();
+
 const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
   options: Options<Data> = {},
+  id: string | undefined = undefined,
 ): ReturnValues<Data, TaskError> => {
   const latestDataRef = useRef<Data | undefined>(options.defaultData);
   const [taskState, setTaskState] = useState<TaskState<Data, TaskError>>({
     status: "defaultData" in options ? TaskStatus.RESOLVED : TaskStatus.PENDING,
   });
+
   const context = useContext<ISuspenseRenderProvider.Context>(SuspenseRenderContext);
+
+  useEffect(() => {
+    /**
+     * Subscribe to the event emitter
+     */
+    if (id) {
+      const handleEmit = (data: TaskState<Data, TaskError>) => {
+        setTaskState(data);
+      };
+      emitter.on(id, handleEmit);
+      return () => {
+        emitter.off(id, handleEmit);
+      };
+    }
+    return () => {};
+  }, [id]);
+
+  /**
+   * Update task status
+   */
+  const updateTaskStatus = useCallback((data: TaskState<Data, TaskError>, sharedId?: string) => {
+    if (sharedId) {
+      /**
+       * Update global status
+       */
+      emitter.emit(sharedId, data);
+    } else {
+      /**
+       * Update local status
+       */
+      setTaskState(data);
+    }
+  }, []);
+
   /**
    * Run `task` function
    */
@@ -31,24 +73,24 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
           for (const taskRunnerInterceptor of taskRunnerInterceptors) {
             // eslint-disable-next-line no-await-in-loop
             taskResult = taskRunnerInterceptor(await taskResult, task, taskId);
-            setTaskState({ status: TaskStatus.PENDING, promise: taskResult });
+            updateTaskStatus({ status: TaskStatus.PENDING, promise: taskResult }, id);
           }
           const data = await taskResult;
-          setTaskState({ status: TaskStatus.RESOLVED, data });
+          updateTaskStatus({ status: TaskStatus.RESOLVED, data }, id);
           return data;
         }
         const promise = task();
-        setTaskState({ status: TaskStatus.PENDING, promise });
+        updateTaskStatus({ status: TaskStatus.PENDING, promise }, id);
         const data = await promise;
-        setTaskState({ status: TaskStatus.RESOLVED, data });
+        updateTaskStatus({ status: TaskStatus.RESOLVED, data }, id);
         return data;
       } catch (e) {
         const error = e as TaskError;
-        setTaskState({ status: TaskStatus.REJECTED, error });
+        updateTaskStatus({ status: TaskStatus.REJECTED, error }, id);
         throw e;
       }
     },
-    [context],
+    [context.experimentals?.taskRunnerInterceptors, id, updateTaskStatus],
   );
 
   /**
