@@ -3,9 +3,9 @@ import { ReactElement } from "react";
  * The `TaskStatus` is task of each status.
  */
 export declare enum TaskStatus {
-    PENDING = 0,
-    RESOLVED = 1,
-    REJECTED = 2
+    PENDING = "PENDING",
+    RESOLVED = "RESOLVED",
+    REJECTED = "REJECTED"
 }
 /**
  * The `Task` is a function that returns a promise.
@@ -48,6 +48,7 @@ export interface TaskState<Data, TaskError> {
     error?: TaskError;
     promise?: Promise<Data>;
     data?: Data;
+    prevData?: Data;
 }
 /**
  * The return values of the `useSuspenseRender` hook.
