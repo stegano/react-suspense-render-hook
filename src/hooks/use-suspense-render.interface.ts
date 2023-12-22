@@ -4,9 +4,9 @@ import { ReactElement } from "react";
  * The `TaskStatus` is task of each status.
  */
 export enum TaskStatus {
-  PENDING,
-  RESOLVED,
-  REJECTED,
+  PENDING = "PENDING",
+  RESOLVED = "RESOLVED",
+  REJECTED = "REJECTED",
 }
 
 /**
@@ -69,6 +69,7 @@ export interface TaskState<Data, TaskError> {
   error?: TaskError;
   promise?: Promise<Data>;
   data?: Data;
+  prevData?: Data;
 }
 
 /**

@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-syntax */
-import { useState, useCallback, useContext, useRef, useEffect } from "react";
+import { useState, useCallback, useContext, useLayoutEffect, useMemo } from "react";
 import EventEmitter from "eventemitter3";
 import {
   TaskStatus,
@@ -12,53 +12,73 @@ import {
 import { SuspenseRenderContext } from "../providers";
 import type { ISuspenseRenderProvider } from "../providers";
 
-/**
- * A global event emitter for `useSuspenseRender`
- */
+const globalStore: Record<string, TaskState<any, any> & { prevData?: any }> = {};
 const emitter = new EventEmitter<string, TaskState<any, any>>();
 
 const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
   options: Options<Data> = {},
   id: string | undefined = undefined,
 ): ReturnValues<Data, TaskError> => {
-  const latestDataRef = useRef<Data | undefined>(options.defaultData);
+  const defaultData = useMemo(() => {
+    if (id !== undefined) {
+      if (id in globalStore) {
+        return globalStore[id].data;
+      }
+      if ("defaultData" in options) {
+        return options.defaultData;
+      }
+    }
+    return undefined;
+  }, [id, options]);
   const [taskState, setTaskState] = useState<TaskState<Data, TaskError>>({
-    status: "defaultData" in options ? TaskStatus.RESOLVED : TaskStatus.PENDING,
+    status: defaultData || "defaultData" in options ? TaskStatus.RESOLVED : TaskStatus.PENDING,
   });
 
   const context = useContext<ISuspenseRenderProvider.Context>(SuspenseRenderContext);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     /**
-     * Subscribe to the event emitter
+     * Subscribe to global store
      */
     if (id) {
-      const handleEmit = (data: TaskState<Data, TaskError>) => {
-        setTaskState(data);
+      /**
+       * Setting as initial data when there is data in global store
+       */
+      if (id in globalStore) {
+        setTaskState(globalStore[id]);
+      }
+      const handleDataEmit = () => {
+        setTaskState(globalStore[id]);
       };
-      emitter.on(id, handleEmit);
+      emitter.on(id, handleDataEmit);
       return () => {
-        emitter.off(id, handleEmit);
+        emitter.off(id, handleDataEmit);
       };
     }
     return () => {};
   }, [id]);
 
   /**
-   * Update task status
+   * Update task status and global store
    */
-  const updateTaskStatus = useCallback((data: TaskState<Data, TaskError>, sharedId?: string) => {
-    if (sharedId) {
-      /**
-       * Update global status
-       */
-      emitter.emit(sharedId, data);
-    } else {
-      /**
-       * Update local status
-       */
-      setTaskState(data);
-    }
+  const updateStatus = useCallback((data: TaskState<Data, TaskError>, sharedId?: string) => {
+    /**
+     * Update local status
+     */
+    setTaskState((prev) => {
+      const state = {
+        ...data,
+        prevData: data.status === TaskStatus.RESOLVED ? prev.prevData : prev.data,
+      };
+      if (sharedId) {
+        /**
+         * Update global store
+         */
+        globalStore[sharedId] = state;
+        emitter.emit(sharedId, state);
+      }
+      return state;
+    });
   }, []);
 
   /**
@@ -69,28 +89,28 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
       try {
         const taskRunnerInterceptors = context.experimentals?.taskRunnerInterceptors;
         if (taskRunnerInterceptors) {
-          let taskResult;
+          let promise;
           for (const taskRunnerInterceptor of taskRunnerInterceptors) {
             // eslint-disable-next-line no-await-in-loop
-            taskResult = taskRunnerInterceptor(await taskResult, task, taskId);
-            updateTaskStatus({ status: TaskStatus.PENDING, promise: taskResult }, id);
+            promise = taskRunnerInterceptor(await promise, task, taskId);
+            updateStatus({ status: TaskStatus.PENDING, promise }, id);
           }
-          const data = await taskResult;
-          updateTaskStatus({ status: TaskStatus.RESOLVED, data }, id);
+          const data = await promise;
+          updateStatus({ status: TaskStatus.RESOLVED, data }, id);
           return data;
         }
         const promise = task();
-        updateTaskStatus({ status: TaskStatus.PENDING, promise }, id);
+        updateStatus({ status: TaskStatus.PENDING, promise }, id);
         const data = await promise;
-        updateTaskStatus({ status: TaskStatus.RESOLVED, data }, id);
+        updateStatus({ status: TaskStatus.RESOLVED, data }, id);
         return data;
       } catch (e) {
         const error = e as TaskError;
-        updateTaskStatus({ status: TaskStatus.REJECTED, error }, id);
+        updateStatus({ status: TaskStatus.REJECTED, error }, id);
         throw e;
       }
     },
-    [context.experimentals?.taskRunnerInterceptors, id, updateTaskStatus],
+    [context.experimentals?.taskRunnerInterceptors, id, updateStatus],
   );
 
   /**
@@ -98,12 +118,10 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
    */
   const suspenseRender: SuspenseRender<Data, TaskError> = useCallback(
     (renderSuccess, renderLoading, renderError) => {
-      const { data, status, error, promise } = taskState;
-      const prevData = latestDataRef.current;
+      const { data, prevData, status, error, promise } = taskState;
       switch (status) {
         case TaskStatus.RESOLVED: {
           const render = (renderSuccess ?? context.renderSuccess) || null;
-          latestDataRef.current = data;
           return typeof render === "function"
             ? render((data ?? options.defaultData) as Data, prevData)
             : render;

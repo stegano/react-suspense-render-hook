@@ -396,7 +396,7 @@ describe("`useSuspenseRender` Testing", () => {
           }),
         [],
       );
-      const [suspenseRender, runTask] = useSuspenseRender<string>(undefined, "share");
+      const [suspenseRender, runTask] = useSuspenseRender<string>(undefined, "share1");
       useEffect(() => {
         runTask(async () => {
           await task();
@@ -425,7 +425,7 @@ describe("`useSuspenseRender` Testing", () => {
       );
     };
     const TestComponentB = () => {
-      const [suspenseRender] = useSuspenseRender<string>(undefined, "share");
+      const [suspenseRender] = useSuspenseRender<string>(undefined, "share1");
       return suspenseRender(
         (data, prevData) => {
           return (
@@ -451,6 +451,74 @@ describe("`useSuspenseRender` Testing", () => {
       await delay(100 * 2);
       const componentAstate3 = componentA.toJSON() as ReactTestRender.ReactTestRendererJSON;
       expect(componentAstate3.children?.join("")).toEqual("Success(Bbb, Aaa)");
+      const componentBstate3 = componentB.toJSON() as ReactTestRender.ReactTestRendererJSON;
+      expect(componentBstate3.children?.join("")).toEqual("Success(Bbb, Aaa)");
+    });
+  });
+  it("shared data(after the status processing is updated, create a hook)", async () => {
+    const TestComponentA = () => {
+      const task = useCallback(
+        async () =>
+          new Promise((resolve) => {
+            setTimeout(resolve, 100);
+          }),
+        [],
+      );
+      const [suspenseRender, runTask] = useSuspenseRender<string>(undefined, "share2");
+      useEffect(() => {
+        runTask(async () => {
+          await task();
+          return "Aaa";
+        });
+      }, [task, runTask]);
+      return suspenseRender(
+        (data, prevData) => {
+          return (
+            <button
+              type="button"
+              onClick={() => {
+                runTask(async () => {
+                  await task();
+                  return "Bbb";
+                });
+              }}
+            >
+              Success({data}
+              {prevData ? `, ${prevData}` : ""})
+            </button>
+          );
+        },
+        <p>Loading</p>,
+        <p>Error</p>,
+      );
+    };
+    const TestComponentB = () => {
+      const [suspenseRender] = useSuspenseRender<string>(undefined, "share2");
+      return suspenseRender(
+        (data, prevData) => {
+          return (
+            <button type="button">
+              Success({data}
+              {prevData ? `, ${prevData}` : ""})
+            </button>
+          );
+        },
+        <p>Loading</p>,
+        <p>Error</p>,
+      );
+    };
+    const componentA = ReactTestRender.create(<TestComponentA />);
+    const componentAState = componentA.toJSON() as ReactTestRender.ReactTestRendererJSON;
+    expect(componentAState.children?.join("")).toEqual("Loading");
+    await ReactTestRender.act(async () => {
+      await delay(100 * 2);
+      const componentAstate2 = componentA.toJSON() as ReactTestRender.ReactTestRendererJSON;
+      expect(componentAstate2.children?.join("")).toEqual("Success(Aaa)");
+      componentAstate2.props.onClick();
+      await delay(100 * 2);
+      const componentAstate3 = componentA.toJSON() as ReactTestRender.ReactTestRendererJSON;
+      expect(componentAstate3.children?.join("")).toEqual("Success(Bbb, Aaa)");
+      const componentB = ReactTestRender.create(<TestComponentB />);
       const componentBstate3 = componentB.toJSON() as ReactTestRender.ReactTestRendererJSON;
       expect(componentBstate3.children?.join("")).toEqual("Success(Bbb, Aaa)");
     });
