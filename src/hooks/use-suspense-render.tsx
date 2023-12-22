@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-syntax */
-import { useState, useCallback, useContext, useLayoutEffect, useMemo } from "react";
+import { useState, useCallback, useContext, useMemo, useEffect } from "react";
 import EventEmitter from "eventemitter3";
 import {
   TaskStatus,
@@ -30,23 +30,28 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
     }
     return undefined;
   }, [id, options]);
-  const [taskState, setTaskState] = useState<TaskState<Data, TaskError>>({
-    status: defaultData || "defaultData" in options ? TaskStatus.RESOLVED : TaskStatus.PENDING,
+
+  const [taskState, setTaskState] = useState<TaskState<Data, TaskError>>(() => {
+    if (id !== undefined) {
+      if (id in globalStore) {
+        /**
+         * Setting as initial data when there is data in global store
+         */
+        return globalStore[id];
+      }
+    }
+    return {
+      status: defaultData || "defaultData" in options ? TaskStatus.RESOLVED : TaskStatus.PENDING,
+    };
   });
 
   const context = useContext<ISuspenseRenderProvider.Context>(SuspenseRenderContext);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     /**
      * Subscribe to global store
      */
     if (id) {
-      /**
-       * Setting as initial data when there is data in global store
-       */
-      if (id in globalStore) {
-        setTaskState(globalStore[id]);
-      }
       const handleDataEmit = () => {
         setTaskState(globalStore[id]);
       };
