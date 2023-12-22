@@ -8,7 +8,7 @@
     "eslint": "eslint '{src,pages}/**/*.{ts,tsx}'",
     "eslint:fix": "eslint '{src,pages}/**/*.{ts,tsx}' --fix",
     "build": "rm -rf ./bin && webpack --config ./webpack.config.js",
-    "deploy": "npm run build && npm publish --access=public",
+    "deploy": "npm run test && npm run build && npm publish --access=public",
     "test": "jest",
     "ts-check": "tsc --noEmit"
   },
