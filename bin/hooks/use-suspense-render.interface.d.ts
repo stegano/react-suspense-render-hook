@@ -11,7 +11,7 @@ export declare enum TaskStatus {
  * The `Task` is a function that returns a promise.
  */
 export interface Task<Data extends any = any> {
-    (): Promise<Data>;
+    (prevData?: Data): Promise<Data>;
 }
 /**
  * The `TaskRunner` is a function that accepts an `Task`.
