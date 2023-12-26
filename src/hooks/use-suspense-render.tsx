@@ -18,7 +18,11 @@ const useSuspenseRender = <Data extends any = any, TaskError = Error | unknown>(
   options: Options<Data> = {},
   id: string | undefined = undefined,
 ): ReturnValues<Data, TaskError> => {
-  const globalState = useSyncExternalStore(globalStore.subscribe, globalStore.getSnapshot);
+  const globalState = useSyncExternalStore(
+    globalStore.subscribe,
+    globalStore.getSnapshot,
+    globalStore.getSnapshot,
+  );
   const uId = useId();
   const hookId = useMemo(() => id ?? uId, [id, uId]);
   const currState = useMemo<TaskState<Data, TaskError>>(() => {
