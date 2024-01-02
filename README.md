@@ -4,6 +4,10 @@
 
 React Suspense Render Hook: This hook allows you to declaratively define components that render when asynchronous data is processed.
 
+## Deprecated 🚀
+This library has been updated to [`react-render-state-hook`](https://www.npmjs.com/package/react-suspense-render-hook), allowing for more reliable use of almost all the features. Please check the link below for further information.
+- https://www.npmjs.com/package/react-suspense-render-hook
+
 ## Installation
 
 The easiest way to install [`react-suspense-render-hook`](https://www.npmjs.com/package/react-suspense-render-hook) is with [npm](https://www.npmjs.com/).
